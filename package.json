@@ -1,0 +1,31 @@
+{
+  "name": "locallink",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10.8.2",
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --names web,api \"npm run dev --workspace=@locallink/web\" \"npm run dev --workspace=@locallink/api\"",
+    "dev:web": "npm run dev --workspace=@locallink/web",
+    "dev:api": "npm run dev --workspace=@locallink/api",
+    "build": "npm run build --workspaces",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript-eslint": "^8.20.0"
+  }
+}
