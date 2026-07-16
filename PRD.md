@@ -13,6 +13,8 @@ Build a grocery marketplace that connects customers with vendor-owned stores and
 - Every order belongs to exactly one store.
 - Only the owning store's vendor can accept or reject that order.
 - Delivery assignment starts only after the vendor marks the order ready for pickup.
+- That action atomically creates the order's one pending delivery request and begins delivery search.
+- Stores and products are soft-deleted using `isActive`.
 
 ## Roles and capabilities
 
@@ -31,6 +33,8 @@ Register and log in; receive delivery jobs only for ready-for-pickup orders; acc
 ### Admin
 
 View dashboard summaries, users, stores, orders, and current order states.
+
+The MVP admin account is seeded; it is not created by public registration.
 
 ## Success criteria
 

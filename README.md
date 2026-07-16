@@ -6,7 +6,7 @@ Turn local grocery stores into quick-commerce storefronts.
 
 Vendors own stores, and stores own their products. Customers choose one store before adding products to a cart. Each order belongs to exactly one store, and only the vendor who owns that store may accept or reject it.
 
-After the vendor prepares the order and marks it ready for pickup, LocalLink offers the delivery job to delivery partners. The first eligible delivery partner to accept is assigned to the order.
+After the vendor prepares the order and marks it ready for pickup, LocalLink atomically creates the order's one delivery request and offers that job to delivery partners. The first eligible delivery partner to accept is assigned to the order.
 
 ## Roles
 

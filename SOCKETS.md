@@ -23,7 +23,7 @@ Events are sent only to the vendor who owns the order's store. There is no retai
 - `delivery-order-picked-up`
 - `delivery-order-delivered`
 
-`delivery-request-created` is emitted only after the order becomes `READY_FOR_PICKUP`.
+The vendor's ready-for-pickup action atomically creates the single pending delivery request, advances the order to `SEARCHING_DELIVERY`, and emits `delivery-request-created`. There is no separate delivery notification before that transaction completes.
 
 ## Admin
 

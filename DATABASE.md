@@ -8,15 +8,15 @@ Roles are `CUSTOMER`, `VENDOR`, `DELIVERY_PARTNER`, and `ADMIN`.
 
 ## Stores
 
-`id`, `vendorId`, `name`, `description`, `address`, `image`, `createdAt`, `updatedAt`
+`id`, `vendorId`, `name`, `description`, `address`, `image`, `isActive`, `createdAt`, `updatedAt`
 
-Each store belongs to one vendor (`Stores.vendorId → Users.id`). A vendor may own multiple stores.
+Each store belongs to one vendor (`Stores.vendorId → Users.id`). A vendor may own multiple stores. `isActive` implements soft deletion; customer-facing queries return active stores only.
 
 ## Products
 
-`id`, `storeId`, `name`, `price`, `description`, `image`, `createdAt`, `updatedAt`
+`id`, `storeId`, `name`, `price`, `description`, `image`, `isActive`, `createdAt`, `updatedAt`
 
-Each product belongs to one store (`Products.storeId → Stores.id`).
+Each product belongs to one store (`Products.storeId → Stores.id`). `isActive` implements soft deletion; customer-facing queries return active products only.
 
 ## Orders
 
@@ -34,7 +34,7 @@ Each item belongs to one order and references a product. The order service must 
 
 `id`, `orderId`, `deliveryPartnerId`, `status`, `createdAt`, `updatedAt`
 
-A delivery request is created or made available only for an order in `READY_FOR_PICKUP`. At most one accepted request may exist per order.
+A delivery request is created only by the owning vendor's ready-for-pickup action. Each order has exactly one delivery request (`orderId` is unique). Its status is one of `PENDING`, `ACCEPTED`, `EXPIRED`, or `CANCELLED`. The ready-for-pickup transaction creates it as `PENDING`, moves the order to `SEARCHING_DELIVERY`, and makes the job available. Acceptance atomically changes it to `ACCEPTED` and assigns the delivery partner to the order.
 
 ## Relationships
 
@@ -42,7 +42,7 @@ A delivery request is created or made available only for an order in `READY_FOR_
 User (Vendor) 1 ── * Store 1 ── * Product
 User (Customer) 1 ── * Order * ── 1 Store
 Order 1 ── * OrderItem * ── 1 Product
-Order 1 ── * DeliveryRequest * ── 1 User (Delivery Partner)
+Order 1 ── 1 DeliveryRequest * ── 1 User (Delivery Partner)
 ```
 
 There is no `RetailerRequest` entity.
