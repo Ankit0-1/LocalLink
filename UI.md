@@ -12,6 +12,7 @@ Landing, login, registration, and role-aware navigation.
 - Order history and live order tracking
 
 Selecting a product selects its store for the cart. The UI must require the customer to clear or replace the cart before choosing products from another store.
+Customer browsing shows active stores and products only.
 
 ## Vendor pages
 
