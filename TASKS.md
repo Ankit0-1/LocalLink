@@ -1,9 +1,9 @@
 # Task List
 
 - [x] Set up backend and frontend projects
-- [ ] Configure Prisma, PostgreSQL, and migrations
-- [ ] Define users, stores, products, orders, order items, and delivery requests
-- [x] Implement JWT authentication and role-based authorization
+- [x] Configure Prisma, PostgreSQL, and migrations
+- [x] Define users, stores, products, orders, order items, and delivery requests
+- [ ] Implement JWT authentication and role-based authorization
 - [ ] Implement vendor store creation and editing
 - [ ] Implement vendor product CRUD scoped to owned stores
 - [ ] Build customer store browsing and store-detail product views
