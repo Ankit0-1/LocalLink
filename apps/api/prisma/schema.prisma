@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  VENDOR
+  DELIVERY_PARTNER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  REJECTED
+  ACCEPTED
+  PREPARING
+  READY_FOR_PICKUP
+  SEARCHING_DELIVERY
+  DELIVERY_ACCEPTED
+  PICKED_UP
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum DeliveryRequestStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id                      String                 @id @default(cuid())
+  name                    String
+  email                   String                 @unique
+  passwordHash            String
+  role                    Role                   @default(CUSTOMER)
+  phone                   String?
+  profileImage            String?
+  isActive                Boolean                @default(true)
+  verificationStatus      VerificationStatus     @default(PENDING)
+  verificationDocumentUrl String?
+  verificationNotes       String?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  stores                  Store[]
+  customerOrders          Order[]                @relation("CustomerOrders")
+  deliveryPartnerOrders   Order[]                @relation("DeliveryPartnerOrders")
+  assignedDeliveryRequests DeliveryRequest[]     @relation("DeliveryPartnerAssignments")
+  addresses               Address[]
+  carts                   Cart[]
+  notifications           Notification[]
+
+  @@map("users")
+}
+
+model Store {
+  id          String    @id @default(cuid())
+  vendorId    String
+  vendor      User      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  address     String?
+  image       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+  orders      Order[]
+
+  @@index([vendorId])
+  @@map("stores")
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  storeId     String
+  store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name        String
+  price       Decimal     @db.Decimal(10, 2)
+  description String?
+  image       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  orderItems  OrderItem[]
+
+  @@index([storeId])
+  @@map("products")
+}
+
+model Order {
+  id                 String              @id @default(cuid())
+  customerId         String
+  customer           User                @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
+  storeId            String
+  store              Store               @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  deliveryPartnerId  String?
+  deliveryPartner    User?               @relation("DeliveryPartnerOrders", fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
+  addressId          String?
+  address            Address?            @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  status             OrderStatus         @default(PENDING)
+  total              Decimal             @db.Decimal(10, 2)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  items              OrderItem[]
+  deliveryRequests   DeliveryRequest[]
+
+  @@index([customerId])
+  @@index([storeId])
+  @@index([deliveryPartnerId])
+  @@index([addressId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity   Int      @default(1)
+  price      Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model DeliveryRequest {
+  id                 String                 @id @default(cuid())
+  orderId            String
+  order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryPartnerId  String?
+  deliveryPartner    User?                  @relation("DeliveryPartnerAssignments", fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
+  status             DeliveryRequestStatus  @default(PENDING)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([orderId])
+  @@index([deliveryPartnerId])
+  @@map("delivery_requests")
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label        String?
+  fullName     String
+  phone        String?
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  postalCode   String
+  country      String
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders       Order[]
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  items     CartItem[]
+
+  @@index([userId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cartId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
