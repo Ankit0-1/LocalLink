@@ -41,7 +41,7 @@ enum VerificationStatus {
 }
 
 model User {
-  id                      String                 @id @default(cuid())
+  id                      String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                    String
   email                   String                 @unique
   passwordHash            String
@@ -53,7 +53,7 @@ model User {
   verificationDocumentUrl String?
   verificationNotes       String?
   createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
+  updatedAt               DateTime               @default(now())
 
   stores                  Store[]
   customerOrders          Order[]                @relation("CustomerOrders")
@@ -67,15 +67,15 @@ model User {
 }
 
 model Store {
-  id          String    @id @default(cuid())
-  vendorId    String
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId    String    @db.Uuid
   vendor      User      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   name        String
   description String?
   address     String?
   image       String?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @default(now())
 
   products    Product[]
   orders      Order[]
@@ -85,15 +85,15 @@ model Store {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  storeId     String
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId     String      @db.Uuid
   store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
   name        String
   price       Decimal     @db.Decimal(10, 2)
   description String?
   image       String?
   createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  updatedAt   DateTime    @default(now())
 
   orderItems  OrderItem[]
 
@@ -102,19 +102,19 @@ model Product {
 }
 
 model Order {
-  id                 String              @id @default(cuid())
-  customerId         String
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId         String              @db.Uuid
   customer           User                @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
-  storeId            String
+  storeId            String              @db.Uuid
   store              Store               @relation(fields: [storeId], references: [id], onDelete: Restrict)
-  deliveryPartnerId  String?
+  deliveryPartnerId  String?             @db.Uuid
   deliveryPartner    User?               @relation("DeliveryPartnerOrders", fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
-  addressId          String?
+  addressId          String?             @db.Uuid
   address            Address?            @relation(fields: [addressId], references: [id], onDelete: SetNull)
   status             OrderStatus         @default(PENDING)
   total              Decimal             @db.Decimal(10, 2)
   createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  updatedAt          DateTime            @default(now())
 
   items              OrderItem[]
   deliveryRequests   DeliveryRequest[]
@@ -127,10 +127,10 @@ model Order {
 }
 
 model OrderItem {
-  id         String   @id @default(cuid())
-  orderId    String
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId    String   @db.Uuid
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId  String
+  productId  String   @db.Uuid
   product    Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
   quantity   Int      @default(1)
   price      Decimal  @db.Decimal(10, 2)
@@ -142,14 +142,14 @@ model OrderItem {
 }
 
 model DeliveryRequest {
-  id                 String                 @id @default(cuid())
-  orderId            String
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId            String                 @db.Uuid
   order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  deliveryPartnerId  String?
+  deliveryPartnerId  String?                @db.Uuid
   deliveryPartner    User?                  @relation("DeliveryPartnerAssignments", fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
   status             DeliveryRequestStatus  @default(PENDING)
   createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  updatedAt          DateTime               @default(now())
 
   @@index([orderId])
   @@index([deliveryPartnerId])
@@ -157,8 +157,8 @@ model DeliveryRequest {
 }
 
 model Address {
-  id           String   @id @default(cuid())
-  userId       String
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @db.Uuid
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   label        String?
   fullName     String
@@ -171,7 +171,7 @@ model Address {
   country      String
   isDefault    Boolean  @default(false)
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime @default(now())
 
   orders       Order[]
 
@@ -180,11 +180,11 @@ model Address {
 }
 
 model Cart {
-  id        String     @id @default(cuid())
-  userId    String
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String     @db.Uuid
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  updatedAt DateTime   @default(now())
 
   items     CartItem[]
 
@@ -193,13 +193,13 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cartId    String   @db.Uuid
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId String
+  productId String   @db.Uuid
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 
   @@index([cartId])
   @@index([productId])
@@ -207,8 +207,8 @@ model CartItem {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   message   String

@@ -26,6 +26,16 @@ Customer chooses store → adds that store's products → checks out → vendor 
 - Realtime: Socket.IO
 - Authentication: JWT with role-based authorization
 
+## Authentication API
+
+The API loads `apps/api/.env`. Set a strong, private `JWT_SECRET` (at least 32 random characters) before running it.
+
+- `POST /api/auth/register` — accepts `name`, `email`, `password` (minimum 8 characters), optional `phone`, and optional role: `CUSTOMER`, `VENDOR`, or `DELIVERY_PARTNER`. `ADMIN` cannot be self-registered.
+- `POST /api/auth/login` — accepts `email` and `password`, and returns `{ user, accessToken }`.
+- `GET /api/auth/me` — requires `Authorization: Bearer <accessToken>` and returns the current user.
+
+Passwords are salted and bcrypt-hashed before they are stored; password hashes are never returned by these endpoints. Reusable `requireAuth` and `requireRole(...)` middleware lives in `apps/api/src/middleware/auth.ts`. Apply both to every future protected route, then also check record ownership (for example, ensure a vendor owns the requested store) within its handler.
+
 ## MVP exclusions
 
 Maps, inventory management, payments, OTP, coupons, reviews, ratings, chat, and product approval are not part of the MVP.
