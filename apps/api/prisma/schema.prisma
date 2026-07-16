@@ -31,6 +31,7 @@ enum OrderStatus {
 enum DeliveryRequestStatus {
   PENDING
   ACCEPTED
+  EXPIRED
   CANCELLED
 }
 
@@ -74,6 +75,7 @@ model Store {
   description String?
   address     String?
   image       String?
+  isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -92,6 +94,7 @@ model Product {
   price       Decimal     @db.Decimal(10, 2)
   description String?
   image       String?
+  isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -116,8 +119,8 @@ model Order {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
-  items              OrderItem[]
-  deliveryRequests   DeliveryRequest[]
+  items             OrderItem[]
+  deliveryRequest   DeliveryRequest?
 
   @@index([customerId])
   @@index([storeId])
@@ -143,7 +146,7 @@ model OrderItem {
 
 model DeliveryRequest {
   id                 String                 @id @default(cuid())
-  orderId            String
+  orderId            String                 @unique
   order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   deliveryPartnerId  String?
   deliveryPartner    User?                  @relation("DeliveryPartnerAssignments", fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
