@@ -1,8 +1,11 @@
+import { RouterProvider } from 'react-router-dom';
+import { router } from './app/router';
+import { AuthProvider } from './features/auth/AuthContext';
+
 export function App() {
   return (
-    <main>
-      <h1>LocalLink</h1>
-      <p>Marketplace application setup is complete.</p>
-    </main>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   );
 }

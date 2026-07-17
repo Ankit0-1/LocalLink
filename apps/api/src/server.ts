@@ -11,12 +11,12 @@ app.use('/api/auth', authRouter);
 
 app.get('/health', async (_req, res) => {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await prisma.$connect();
     console.log('Database connection successful');
-    res.json({ status: 'ok', database: 'connected' });
+    res.json({ success: true, data: { status: 'ok', database: 'connected' } });
   } catch (error) {
     console.error('Database connection error:', error);
-    res.status(500).json({ status: 'error', database: 'disconnected', error: String(error) });
+    res.status(500).json({ success: false, message: 'Database connection unavailable' });
   }
 });
 
