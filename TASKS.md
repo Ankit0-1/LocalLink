@@ -39,7 +39,8 @@ Depends on: Phase 0
   - [x] `apiClient` (get/post/put/patch/delete, base URL, auth header injection, JSON parsing, `ApiError`) and `tokenStorage` (getToken/setToken/clearToken/hasToken) built and now exercised by `LoginPage`/`RegisterPage` via `AuthContext`
   - [x] `AuthContext`/`AuthProvider` built (typed models, `login`/`register`/`fetchMe` API calls, `useReducer` state, session rehydration via `GET /api/auth/me`), mounted app-wide in `App.tsx`, and called by `LoginPage`/`RegisterPage`
 - [ ] Gate routes/UI by role (customer, vendor, delivery partner, admin)
-  - [x] Routing foundation in place (React Router, root layout, route path constants, `getDefaultRoute(role)` helper, `/login` and `/register` routes) — no `RequireAuth`/`RequireRole` guards yet
+  - [x] Routing foundation in place (React Router, root layout, route path constants, `getDefaultRoute(role)` helper, `/login` and `/register` routes)
+  - [x] `RequireAuth` route guard built (`routes/RequireAuth.tsx` + `routes/RouteLoadingFallback.tsx`) — handles loading/authenticated/unauthenticated states; not yet wired into the router since there are no protected routes to guard yet. `RequireRole` still not built.
 
 **Milestone checkpoint:** A user can register, log in, and reach role-appropriate views; unauthenticated or wrong-role requests are rejected by the API. (Backend half met — auth endpoints and middleware verified with a consistent `{ user, accessToken }` / `{ user }` response contract; frontend half still pending.)
 

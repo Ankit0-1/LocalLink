@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, type Location } from 'react-router-dom';
 import { getDefaultRoute } from '../../app/getDefaultRoute';
 import { ApiError } from '../../lib/apiClient';
 import { useAuth } from './AuthContext';
 import { LoginForm } from './LoginForm';
 
 interface LoginLocationState {
-  from?: string;
+  from?: Location;
 }
 
 export function LoginPage() {

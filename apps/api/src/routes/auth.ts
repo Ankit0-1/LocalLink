@@ -58,6 +58,7 @@ authRouter.post('/register', async (req, res, next) => {
 
     return res.status(201).json({ user, accessToken: createAccessToken(user) });
   } catch (error) {
+    console.log("Registration error: ", error);
     return next(error);
   }
 });
