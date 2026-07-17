@@ -30,7 +30,7 @@ interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isInitializing: boolean;
-  login: (payload: LoginPayload) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<User>;
   logout: () => void;
 }
 
@@ -53,10 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  async function login(payload: LoginPayload): Promise<void> {
+  async function login(payload: LoginPayload): Promise<User> {
     const { user, accessToken } = await loginRequest(payload);
     setToken(accessToken);
     dispatch({ type: 'AUTH_SUCCESS', user });
+    return user;
   }
 
   function logout(): void {

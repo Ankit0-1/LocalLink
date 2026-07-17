@@ -33,6 +33,7 @@ Depends on: Phase 0
 
 **Frontend Tasks**
 - [ ] Build registration and login views
+  - [x] Login view built (`LoginPage`/`LoginForm`, mounted at `/login`, `AuthProvider` now mounted app-wide) — registration view not yet built
 - [ ] Store and attach JWT access token to authenticated requests
   - [x] `apiClient` (get/post/put/patch/delete, base URL, auth header injection, JSON parsing, `ApiError`) and `tokenStorage` (getToken/setToken/clearToken/hasToken) built — not yet called by anything, since login/register don't exist yet
   - [x] `AuthContext`/`AuthProvider` built (typed models, `login`/`register`/`fetchMe` API calls, `useReducer` state, session rehydration via `GET /api/auth/me`) — not yet mounted in the app and no pages call it yet

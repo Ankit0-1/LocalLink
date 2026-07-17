@@ -58,6 +58,20 @@ Not in this slice, per scope: no pages, no `RequireAuth`/`RequireRole` guards, `
 
 Verified: `tsc --noEmit`, `eslint apps/web/src/features/auth` (0 warnings/errors), and `npm run build` all pass.
 
+## Frontend login slice (Phase 1 — fourth frontend slice)
+
+- `apps/web/src/App.tsx` — now wraps `RouterProvider` in `AuthProvider`, so `useAuth()` is available app-wide. This was the "mount `AuthProvider`" step deferred from the previous slice.
+- `apps/web/src/app/routePaths.ts` — added `login: '/login'` and placeholder role-dashboard paths (`vendorDashboard`, `customerDashboard`, `deliveryDashboard`, `adminDashboard`). The dashboard paths are not yet registered as routes (no dashboard pages exist) — they exist so `getDefaultRoute` has real targets to return now, ready for the dashboard pages that later phases will add at those exact paths.
+- `apps/web/src/app/getDefaultRoute.ts` — `getDefaultRoute(role: Role): string`, a single switch mapping each `Role` to its dashboard path (falls back to `routePaths.home` for safety). This is the one place role→route logic lives; nothing else hardcodes a redirect target.
+- `apps/web/src/app/router.tsx` — added a `login` child route under `RootLayout` rendering `LoginPage`.
+- `apps/web/src/features/auth/LoginForm.tsx` — presentational form only: controlled `email`/`password` inputs, calls `onSubmit(email, password)`, renders an `error` string and disables the submit button while `isSubmitting`. No knowledge of `AuthContext` or routing.
+- `apps/web/src/features/auth/LoginPage.tsx` — calls `useAuth().login(...)`, then navigates to `location.state.from` if present (set by a future `RequireAuth` guard redirecting here), otherwise to `getDefaultRoute(user.role)`. Catches `ApiError` from `apiClient` to show the backend's message; falls back to a generic message for other failures.
+- `apps/web/src/features/auth/AuthContext.tsx` — `login()` now returns the authenticated `User` (was `Promise<void>`) so `LoginPage` can compute the redirect target from the just-returned role without waiting on a stale render/closure of context state.
+
+Not in this slice, per scope: no register page, no `RequireAuth`/`RequireRole` guards, no vendor/customer/delivery/admin dashboard pages (their route paths are reserved but unregistered).
+
+Verified end-to-end against a real backend: a throwaway `postgres:16-alpine` container + `prisma migrate deploy` + the actual `apps/api` server (JWT auth unchanged), then exercised `features/auth/api.ts`'s `login`/`fetchMe`, `lib/tokenStorage.ts`, and `app/getDefaultRoute.ts` directly via `vite-node` (so `import.meta.env` resolves like it does in the real app) against that live server: register → login → `getDefaultRoute('VENDOR')` → `/vendor`, token persisted and sent back correctly on `fetchMe`, `clearToken` removes it, and a wrong-password login is correctly rejected with the backend's error message. Also confirmed `tsc --noEmit`, `eslint` (0 warnings/errors), and `npm run build` pass, and that `dist/assets/*.js` contains the expected `/api/auth/login` and `locallink.accessToken` strings. Full mouse/keyboard interaction in an actual browser wasn't verified — no headless browser is available in this environment (same limitation noted in the prior slice). All verification containers/servers/`.env` files were torn down afterward; nothing from this verification was committed.
+
 ## Next up
 
-Per `TASKS.md`, Phase 1 backend is done. Remaining Phase 1 frontend work: mount `AuthProvider` in the app, build login/register pages, and add `RequireAuth`/`RequireRole` route guards. Each phase in `TASKS.md` now has an explicit Definition of Done checklist to verify against before moving to the next phase.
+Per `TASKS.md`, Phase 1 backend is done. Remaining Phase 1 frontend work: build the register page, and add `RequireAuth`/`RequireRole` route guards (the login page already reads `location.state.from` in anticipation of `RequireAuth` setting it). Each phase in `TASKS.md` now has an explicit Definition of Done checklist to verify against before moving to the next phase.
