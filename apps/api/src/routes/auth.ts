@@ -71,7 +71,10 @@ authRouter.post('/login', async (req, res, next) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { ...safeUserSelect, passwordHash: true },
+    });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -80,10 +83,8 @@ authRouter.post('/login', async (req, res, next) => {
     }
 
     const { passwordHash: _passwordHash, ...safeUser } = user;
-    console.log("User logged in successfully:", safeUser);
-    return res.status(200).json({ data: safeUser, accessToken: createAccessToken(user) });
+    return res.status(200).json({ user: safeUser, accessToken: createAccessToken(user) });
   } catch (error) {
-    console.log("Error during login:", error);
     return next(error);
   }
 });
@@ -91,9 +92,8 @@ authRouter.post('/login', async (req, res, next) => {
 authRouter.get('/me', requireAuth, async (req: AuthenticatedRequest, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.id }, select: safeUserSelect });
-    return res.status(200).json({ data: user });
+    return res.status(200).json({ user });
   } catch (error) {
-    console.log("Error fetching user profile:", error);
     return next(error);
   }
 });

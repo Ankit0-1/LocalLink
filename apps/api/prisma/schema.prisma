@@ -145,8 +145,8 @@ model OrderItem {
 }
 
 model DeliveryRequest {
-  id                 String                 @id @default(cuid())
-  orderId            String                 @unique
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId            String                 @unique @db.Uuid
   order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   deliveryPartnerId  String?                @db.Uuid
   deliveryPartner    User?                  @relation("DeliveryPartnerAssignments", fields: [deliveryPartnerId], references: [id], onDelete: SetNull)

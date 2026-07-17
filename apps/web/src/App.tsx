@@ -1,8 +1,6 @@
+import { RouterProvider } from 'react-router-dom';
+import { router } from './app/router';
+
 export function App() {
-  return (
-    <main>
-      <h1>LocalLink</h1>
-      <p>Marketplace application setup is complete.</p>
-    </main>
-  );
+  return <RouterProvider router={router} />;
 }
