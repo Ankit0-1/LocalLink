@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, type ReactNode } from 'react';
-import { fetchMe, login as loginRequest } from './api';
+import { fetchMe, login as loginRequest, register as registerRequest } from './api';
 import { clearToken, hasToken, setToken } from '../../lib/tokenStorage';
-import type { LoginPayload, User } from './types';
+import type { LoginPayload, RegisterPayload, User } from './types';
 
 interface AuthState {
   user: User | null;
@@ -31,6 +31,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isInitializing: boolean;
   login: (payload: LoginPayload) => Promise<User>;
+  register: (payload: RegisterPayload) => Promise<User>;
   logout: () => void;
 }
 
@@ -60,6 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user;
   }
 
+  async function register(payload: RegisterPayload): Promise<User> {
+    const { user, accessToken } = await registerRequest(payload);
+    setToken(accessToken);
+    dispatch({ type: 'AUTH_SUCCESS', user });
+    return user;
+  }
+
   function logout(): void {
     clearToken();
     dispatch({ type: 'AUTH_CLEAR' });
@@ -70,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: state.user !== null,
     isInitializing: state.isInitializing,
     login,
+    register,
     logout,
   };
 

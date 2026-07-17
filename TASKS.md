@@ -32,13 +32,14 @@ Depends on: Phase 0
 - [x] Implement role-based authorization middleware (`requireAuth`, `requireRole`)
 
 **Frontend Tasks**
-- [ ] Build registration and login views
-  - [x] Login view built (`LoginPage`/`LoginForm`, mounted at `/login`, `AuthProvider` now mounted app-wide) — registration view not yet built
-- [ ] Store and attach JWT access token to authenticated requests
-  - [x] `apiClient` (get/post/put/patch/delete, base URL, auth header injection, JSON parsing, `ApiError`) and `tokenStorage` (getToken/setToken/clearToken/hasToken) built — not yet called by anything, since login/register don't exist yet
-  - [x] `AuthContext`/`AuthProvider` built (typed models, `login`/`register`/`fetchMe` API calls, `useReducer` state, session rehydration via `GET /api/auth/me`) — not yet mounted in the app and no pages call it yet
+- [x] Build registration and login views
+  - [x] Login view built (`LoginPage`/`LoginForm`, mounted at `/login`, `AuthProvider` now mounted app-wide)
+  - [x] Registration view built (`RegisterPage`/`RegisterForm`, mounted at `/register`, `AuthContext` gained a matching `register()` method)
+- [x] Store and attach JWT access token to authenticated requests
+  - [x] `apiClient` (get/post/put/patch/delete, base URL, auth header injection, JSON parsing, `ApiError`) and `tokenStorage` (getToken/setToken/clearToken/hasToken) built and now exercised by `LoginPage`/`RegisterPage` via `AuthContext`
+  - [x] `AuthContext`/`AuthProvider` built (typed models, `login`/`register`/`fetchMe` API calls, `useReducer` state, session rehydration via `GET /api/auth/me`), mounted app-wide in `App.tsx`, and called by `LoginPage`/`RegisterPage`
 - [ ] Gate routes/UI by role (customer, vendor, delivery partner, admin)
-  - [x] Routing foundation in place (React Router, root layout, route path constants) — no auth views, context, or route guards yet
+  - [x] Routing foundation in place (React Router, root layout, route path constants, `getDefaultRoute(role)` helper, `/login` and `/register` routes) — no `RequireAuth`/`RequireRole` guards yet
 
 **Milestone checkpoint:** A user can register, log in, and reach role-appropriate views; unauthenticated or wrong-role requests are rejected by the API. (Backend half met — auth endpoints and middleware verified with a consistent `{ user, accessToken }` / `{ user }` response contract; frontend half still pending.)
 
