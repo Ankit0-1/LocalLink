@@ -66,6 +66,7 @@ authRouter.post('/register', async (req, res, next) => {
 authRouter.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body ?? {};
+    console.log("Login request body: ", req.body);
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
     if (!isNonEmptyString(normalizedEmail) || !isNonEmptyString(password)) {
@@ -76,6 +77,7 @@ authRouter.post('/login', async (req, res, next) => {
       where: { email: normalizedEmail },
       select: { ...safeUserSelect, passwordHash: true },
     });
+    console.log("Found user: ", user);
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -84,8 +86,10 @@ authRouter.post('/login', async (req, res, next) => {
     }
 
     const { passwordHash: _passwordHash, ...safeUser } = user;
+    console.log("User logged in successfully:", safeUser);
     return res.status(200).json({ user: safeUser, accessToken: createAccessToken(user) });
   } catch (error) {
+    console.log("Login error: ", error);
     return next(error);
   }
 });

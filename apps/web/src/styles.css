@@ -9,7 +9,29 @@ body {
 }
 
 main {
-  max-width: 48rem;
+  max-width: 72rem;
   margin: 0 auto;
   padding: 4rem 1.5rem;
 }
+
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+label { display: grid; gap: 0.35rem; }
+input, textarea { padding: 0.5rem; }
+.dashboard-header, .dashboard-header > div, .dashboard-grid, .item-list li, .item-list li > div { display: flex; gap: 0.75rem; }
+.dashboard-header { justify-content: space-between; align-items: flex-start; }
+.dashboard-header button { align-self: center; }
+.dashboard-header h2, .dashboard-header p { margin: 0; }
+.dashboard-grid { align-items: flex-start; gap: 3rem; }
+.dashboard-grid > div { flex: 1; min-width: 0; }
+.form-stack { display: grid; gap: 0.75rem; }
+.form-stack > div { display: flex; gap: 0.5rem; }
+.item-list { display: grid; gap: 0.5rem; padding: 0; list-style: none; }
+.item-list li { justify-content: space-between; align-items: center; border: 1px solid #d1d5db; padding: 0.75rem; }
+.item-list li.selected { border-color: #2563eb; }
+.link-button { border: 0; background: none; padding: 0; color: #1d4ed8; text-decoration: underline; }
+.error { color: #b91c1c; }
+.success { color: #166534; }
+.item-list li { flex-direction: column; align-items: flex-start; }
+.item-list li > div { align-items: center; justify-content: space-between; width: 100%; }
+@media (max-width: 42rem) { .dashboard-grid { flex-direction: column; gap: 2rem; } .dashboard-grid > div { width: 100%; } }

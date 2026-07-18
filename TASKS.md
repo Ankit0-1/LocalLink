@@ -30,6 +30,7 @@ Depends on: Phase 0
 **Backend Tasks**
 - [x] Implement JWT authentication (register, login, `/me`)
 - [x] Implement role-based authorization middleware (`requireAuth`, `requireRole`)
+- [x] Configure CORS for the web app origin and preflight requests
 
 **Frontend Tasks**
 - [x] Build registration and login views
@@ -60,12 +61,12 @@ Depends on: Phase 0
 Depends on: Phase 1
 
 **Backend Tasks**
-- [ ] Implement vendor store creation and editing
-- [ ] Implement vendor product CRUD scoped to owned stores
+- [x] Implement vendor store creation and editing
+- [x] Implement vendor product CRUD scoped to owned stores
 
 **Frontend Tasks**
-- [ ] Build vendor store creation/editing views
-- [ ] Build vendor product CRUD views scoped to owned stores
+- [x] Build vendor store creation/editing views
+- [x] Build vendor product CRUD views scoped to owned stores
 
 **Milestone checkpoint:** A logged-in vendor can create a store and manage its products end-to-end through the UI; vendors cannot edit stores/products they don't own.
 

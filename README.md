@@ -29,6 +29,7 @@ Customer chooses store → adds that store's products → checks out → vendor 
 ## Authentication API
 
 The API loads `apps/api/.env`. Set a strong, private `JWT_SECRET` (at least 32 random characters) before running it.
+For the web app, set `CORS_ALLOWED_ORIGINS` to a comma-separated list of allowed UI origins. Local Vite origins (`http://localhost:5173` and `http://127.0.0.1:5173`) are allowed by default.
 
 - `POST /api/auth/register` — accepts `name`, `email`, `password` (minimum 8 characters), optional `phone`, and optional role: `CUSTOMER`, `VENDOR`, or `DELIVERY_PARTNER`. `ADMIN` cannot be self-registered.
 - `POST /api/auth/login` — accepts `email` and `password`, and returns `{ user, accessToken }`.

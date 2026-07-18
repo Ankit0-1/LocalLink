@@ -14,6 +14,8 @@ Known minor issue (not fixed, pre-existing, low priority): `DeliveryRequest` car
 
 `POST /api/auth/register`, `POST /api/auth/login`, and `GET /api/auth/me` are implemented (`apps/api/src/routes/auth.ts`), backed by `requireAuth` / `requireRole` middleware (`apps/api/src/middleware/auth.ts`) and JWT helpers (`apps/api/src/lib/auth.ts`, 1-day expiry, `sub`/`role` claims).
 
+The API CORS middleware (`apps/api/src/middleware/cors.ts`) allows the local Vite origins by default and responds to browser preflight requests. Deployments configure allowed UI origins through the comma-separated `CORS_ALLOWED_ORIGINS` environment variable.
+
 All three endpoints now share a single response contract: `register` and `login` return `{ user, accessToken }`, `me` returns `{ user }` — and `user` is always the same field set (`safeUserSelect`: id, name, email, role, phone, profileImage, isActive, verificationStatus, createdAt) regardless of endpoint. Previously `login` returned `{ data, accessToken }` with extra fields (`verificationDocumentUrl`, `verificationNotes`, `updatedAt`) not present in the other two responses; this drift is fixed.
 
 Debug/PII `console.log` calls that logged full user objects and error details in the auth routes have been removed.
