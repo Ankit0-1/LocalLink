@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/pages/RegisterPage';
 import { CustomerDashboard } from '../features/customer/CustomerDashboard';
+import { DeliveryDashboard } from '../features/delivery/DeliveryDashboard';
 import { VendorDashboard } from '../features/vendor/VendorDashboard';
 import { RequireAuth } from '../routes/RequireAuth';
 import { RequireRole } from '../routes/RequireRole';
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
           {
             element: <RequireRole allowedRoles={['VENDOR']} />,
             children: [{ path: 'vendor', element: <VendorDashboard /> }],
+          },
+          {
+            element: <RequireRole allowedRoles={['DELIVERY_PARTNER']} />,
+            children: [{ path: 'delivery', element: <DeliveryDashboard /> }],
           },
         ],
       },
