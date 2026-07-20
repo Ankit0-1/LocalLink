@@ -4,6 +4,7 @@ import { prisma } from './lib/prisma.js';
 import { cors } from './middleware/cors.js';
 import authRouter from './routes/auth.js';
 import customerRouter from './routes/customer.js';
+import deliveryRouter from './routes/delivery.js';
 import vendorRouter from './routes/vendor.js';
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/customer', customerRouter);
 app.use('/api/vendor', vendorRouter);
+app.use('/api/delivery', deliveryRouter);
 
 app.get('/health', async (_req, res) => {
   try {

@@ -153,15 +153,15 @@ Depends on: Phase 4
 Depends on: Phase 5
 
 **Backend Tasks**
-- [ ] Offer ready-for-pickup delivery jobs to delivery partners
-- [ ] Implement first-eligible-acceptance assignment (concurrency-safe)
-- [ ] Implement pickup and delivery status transitions
+- [x] Offer ready-for-pickup delivery jobs to delivery partners (`GET /api/delivery/jobs` — `apps/api/src/routes/delivery.ts`, lists `DeliveryRequest` rows still `PENDING`)
+- [x] Implement first-eligible-acceptance assignment (concurrency-safe) (`PATCH /api/delivery/jobs/:deliveryRequestId/accept` — a conditional `updateMany` with `WHERE status = PENDING AND deliveryPartnerId IS NULL` inside a `$transaction`; only the first concurrent request's predicate still holds when it acquires the row lock, every later one updates zero rows and gets 409)
+- [x] Implement pickup and delivery status transitions (`PATCH /api/delivery/orders/:orderId/{picked-up,delivered}`, ownership-scoped via `deliveryPartnerId`, enforcing `DELIVERY_ACCEPTED`→`PICKED_UP`→`DELIVERED`)
 
 **Frontend Tasks**
-- [ ] Build delivery dashboard listing available jobs
-- [ ] Build job acceptance, pickup, and delivery action UI
+- [x] Build delivery dashboard listing available jobs (`DeliveryDashboard.tsx` "Available jobs" section)
+- [x] Build job acceptance, pickup, and delivery action UI (Accept button on available jobs; "Mark picked up"/"Mark delivered" buttons on the "My deliveries" section, conditional on status)
 
-**Milestone checkpoint:** A delivery partner can accept a ready job, and only one of several concurrently-accepting delivery partners is assigned; the order can be moved through pickup to delivered.
+**Milestone checkpoint:** A delivery partner can accept a ready job, and only one of several concurrently-accepting delivery partners is assigned; the order can be moved through pickup to delivered. Met — verified with 8 concurrent accept requests from 2 partners against the same job (see `docs/current.md`).
 
 **Definition of Done:**
 - Delivery partners see ready-for-pickup jobs
