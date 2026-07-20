@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { OrderStatus, Prisma, Role } from '@prisma/client';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../middleware/auth.js';
@@ -196,6 +196,153 @@ vendorRouter.delete('/products/:productId', async (req: AuthenticatedRequest, re
 
     await prisma.product.update({ where: { id: product.id }, data: { isActive: false } });
     return res.status(204).send();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+const vendorOrderSelect = {
+  id: true,
+  status: true,
+  total: true,
+  createdAt: true,
+  updatedAt: true,
+  customer: { select: { id: true, name: true, phone: true } },
+  store: { select: { id: true, name: true } },
+  items: {
+    select: {
+      id: true,
+      quantity: true,
+      price: true,
+      product: { select: { id: true, name: true } },
+    },
+  },
+} as const;
+
+type VendorOrder = Prisma.OrderGetPayload<{ select: typeof vendorOrderSelect }>;
+
+function serializeOrder(order: VendorOrder) {
+  return {
+    id: order.id,
+    status: order.status,
+    total: order.total.toString(),
+    createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
+    customer: order.customer,
+    store: order.store,
+    items: order.items.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      price: item.price.toString(),
+      product: item.product,
+    })),
+  };
+}
+
+function findOwnedOrder(vendorId: string, orderId: string) {
+  return prisma.order.findFirst({
+    where: { id: orderId, store: { vendorId } },
+    select: { id: true, status: true },
+  });
+}
+
+vendorRouter.get('/orders', async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { store: { vendorId: req.user!.id } },
+      orderBy: { createdAt: 'desc' },
+      select: vendorOrderSelect,
+    });
+    return res.json({ orders: orders.map(serializeOrder) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+vendorRouter.patch('/orders/:orderId/accept', async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const order = await findOwnedOrder(req.user!.id, req.params.orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== OrderStatus.PENDING) {
+      return res.status(409).json({ message: 'Only pending orders can be accepted' });
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: { status: OrderStatus.ACCEPTED },
+      select: vendorOrderSelect,
+    });
+    return res.json({ order: serializeOrder(updatedOrder) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+vendorRouter.patch('/orders/:orderId/reject', async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const order = await findOwnedOrder(req.user!.id, req.params.orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== OrderStatus.PENDING) {
+      return res.status(409).json({ message: 'Only pending orders can be rejected' });
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: { status: OrderStatus.REJECTED },
+      select: vendorOrderSelect,
+    });
+    return res.json({ order: serializeOrder(updatedOrder) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+vendorRouter.patch('/orders/:orderId/preparing', async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const order = await findOwnedOrder(req.user!.id, req.params.orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== OrderStatus.ACCEPTED) {
+      return res.status(409).json({ message: 'Only accepted orders can be marked preparing' });
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: { status: OrderStatus.PREPARING },
+      select: vendorOrderSelect,
+    });
+    return res.json({ order: serializeOrder(updatedOrder) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+vendorRouter.patch('/orders/:orderId/ready-for-pickup', async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const order = await findOwnedOrder(req.user!.id, req.params.orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== OrderStatus.PREPARING) {
+      return res.status(409).json({ message: 'Only preparing orders can be marked ready for pickup' });
+    }
+
+    let updatedOrder: VendorOrder;
+    try {
+      updatedOrder = await prisma.$transaction(async (tx) => {
+        const result = await tx.order.update({
+          where: { id: order.id },
+          data: { status: OrderStatus.READY_FOR_PICKUP },
+          select: vendorOrderSelect,
+        });
+        await tx.deliveryRequest.create({ data: { orderId: order.id } });
+        return result;
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return res.status(409).json({ message: 'A delivery request already exists for this order' });
+      }
+      throw error;
+    }
+
+    return res.json({ order: serializeOrder(updatedOrder) });
   } catch (error) {
     return next(error);
   }

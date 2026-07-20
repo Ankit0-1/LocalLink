@@ -34,3 +34,31 @@ export interface ProductPayload {
   description: string;
   image: string;
 }
+
+export interface OrderItem {
+  id: string;
+  quantity: number;
+  price: string;
+  product: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface Order {
+  id: string;
+  status: string;
+  total: string;
+  createdAt: string;
+  updatedAt: string;
+  customer: {
+    id: string;
+    name: string;
+    phone: string | null;
+  };
+  store: {
+    id: string;
+    name: string;
+  };
+  items: OrderItem[];
+}

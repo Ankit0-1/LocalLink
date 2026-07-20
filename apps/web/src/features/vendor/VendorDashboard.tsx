@@ -3,8 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { routePaths } from '../../app/routePaths';
 import { ApiError } from '../../lib/apiClient';
 import { useAuth } from '../auth/AuthContext';
-import { createProduct, createStore, deleteProduct, deleteStore, listProducts, listStores, updateProduct, updateStore } from './api';
-import type { Product, ProductPayload, Store, StorePayload } from './types';
+import {
+  acceptOrder,
+  createProduct,
+  createStore,
+  deleteProduct,
+  deleteStore,
+  listOrders,
+  listProducts,
+  listStores,
+  markOrderPreparing,
+  markOrderReadyForPickup,
+  rejectOrder,
+  updateProduct,
+  updateStore,
+} from './api';
+import type { Order, Product, ProductPayload, Store, StorePayload } from './types';
 
 const emptyStore: StorePayload = { name: '', description: '', address: '', image: '' };
 const emptyProduct: ProductPayload = { name: '', price: 0, description: '', image: '' };
@@ -19,6 +33,7 @@ export function VendorDashboard() {
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [storeForm, setStoreForm] = useState<StorePayload>(emptyStore);
   const [productForm, setProductForm] = useState<ProductPayload>(emptyProduct);
   const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
@@ -33,8 +48,14 @@ export function VendorDashboard() {
     setSelectedStoreId((current) => current && nextStores.some((store) => store.id === current) ? current : nextStores[0]?.id ?? null);
   }
 
+  async function loadOrders() {
+    const { orders: nextOrders } = await listOrders();
+    setOrders(nextOrders);
+  }
+
   useEffect(() => {
     loadStores().catch((err) => setError(messageFor(err, 'Could not load your stores.'))).finally(() => setIsLoading(false));
+    loadOrders().catch((err) => setError(messageFor(err, 'Could not load your orders.')));
   }, []);
 
   useEffect(() => {
@@ -113,6 +134,15 @@ export function VendorDashboard() {
     setProductForm({ name: product.name, price: Number(product.price), description: product.description ?? '', image: product.image ?? '' });
   }
 
+  async function handleOrderAction(orderId: string, action: (orderId: string) => Promise<{ order: Order }>) {
+    try {
+      await action(orderId);
+      await loadOrders();
+    } catch (err) {
+      setError(messageFor(err, 'Could not update the order.'));
+    }
+  }
+
   return (
     <section className="dashboard">
       <header className="dashboard-header">
@@ -149,6 +179,23 @@ export function VendorDashboard() {
             <strong>{product.name}</strong> — ₹{Number(product.price).toFixed(2)} {!product.isActive && <small>Inactive</small>}
             <div><button onClick={() => startProductEdit(product)}>Edit</button>{product.isActive && <button onClick={() => removeProduct(product.id)}>Deactivate</button>}</div>
           </li>)}</ul></>}
+        </div>
+        <div>
+          <h3>Orders</h3>
+          {orders.length === 0 ? <p>No orders yet.</p> : <ul className="item-list">{orders.map((order) => <li key={order.id}>
+            <div>
+              <strong>{order.store.name}</strong> — {order.customer.name}
+              <div>{order.status} · ₹{Number(order.total).toFixed(2)}</div>
+            </div>
+            <div>
+              {order.status === 'PENDING' && <>
+                <button onClick={() => void handleOrderAction(order.id, acceptOrder)}>Accept</button>
+                <button onClick={() => void handleOrderAction(order.id, rejectOrder)}>Reject</button>
+              </>}
+              {order.status === 'ACCEPTED' && <button onClick={() => void handleOrderAction(order.id, markOrderPreparing)}>Start preparing</button>}
+              {order.status === 'PREPARING' && <button onClick={() => void handleOrderAction(order.id, markOrderReadyForPickup)}>Ready for pickup</button>}
+            </div>
+          </li>)}</ul>}
         </div>
       </div>}
     </section>

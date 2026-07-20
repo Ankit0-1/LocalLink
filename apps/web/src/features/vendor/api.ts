@@ -1,5 +1,5 @@
 import { apiClient } from '../../lib/apiClient';
-import type { Product, ProductPayload, Store, StorePayload } from './types';
+import type { Order, Product, ProductPayload, Store, StorePayload } from './types';
 
 export function listStores(): Promise<{ stores: Store[] }> {
   return apiClient.get('/api/vendor/stores');
@@ -31,4 +31,24 @@ export function updateProduct(productId: string, payload: ProductPayload): Promi
 
 export function deleteProduct(productId: string): Promise<void> {
   return apiClient.delete(`/api/vendor/products/${productId}`);
+}
+
+export function listOrders(): Promise<{ orders: Order[] }> {
+  return apiClient.get('/api/vendor/orders');
+}
+
+export function acceptOrder(orderId: string): Promise<{ order: Order }> {
+  return apiClient.patch(`/api/vendor/orders/${orderId}/accept`);
+}
+
+export function rejectOrder(orderId: string): Promise<{ order: Order }> {
+  return apiClient.patch(`/api/vendor/orders/${orderId}/reject`);
+}
+
+export function markOrderPreparing(orderId: string): Promise<{ order: Order }> {
+  return apiClient.patch(`/api/vendor/orders/${orderId}/preparing`);
+}
+
+export function markOrderReadyForPickup(orderId: string): Promise<{ order: Order }> {
+  return apiClient.patch(`/api/vendor/orders/${orderId}/ready-for-pickup`);
 }
