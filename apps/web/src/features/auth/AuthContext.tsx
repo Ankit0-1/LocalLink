@@ -27,7 +27,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   }
 }
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isInitializing: boolean;
@@ -36,7 +36,10 @@ interface AuthContextValue {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+// Exported (not just AuthProvider/useAuth) so tests can render
+// `<AuthContext.Provider value={...}>` directly with a fixed, synchronous auth state,
+// instead of driving the real provider through HTTP/token/socket side effects.
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);

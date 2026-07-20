@@ -220,16 +220,16 @@ Depends on: Phase 7
 Depends on: Phase 8 (exercises the full flow; individual test suites may start as soon as their corresponding phase lands)
 
 **Backend Tasks**
-- [ ] Add authorization tests (role and ownership enforcement)
-- [ ] Add order/delivery lifecycle tests
-- [ ] Add single-store cart/order tests
-- [ ] Add concurrent delivery-acceptance tests
+- [x] Add authorization tests (role and ownership enforcement) (`apps/api/tests/authorization.test.ts`)
+- [x] Add order/delivery lifecycle tests (`apps/api/tests/orderLifecycle.test.ts`)
+- [x] Add single-store cart/order tests (`apps/api/tests/singleStoreCart.test.ts`)
+- [x] Add concurrent delivery-acceptance tests (`apps/api/tests/concurrentDelivery.test.ts`)
 
 **Frontend Tasks**
-- [ ] Add role-gated routing/UI tests
-- [ ] Add single-store cart UI tests
+- [x] Add role-gated routing/UI tests (`apps/web/tests/routing.test.tsx` — `RequireAuth`/`RequireRole`)
+- [x] Add single-store cart UI tests (`apps/web/tests/customerCart.test.tsx`)
 
-**Milestone checkpoint:** Test suite covers authorization, full order/delivery lifecycle, single-store enforcement, and concurrent delivery acceptance; all tests pass in CI.
+**Milestone checkpoint:** Test suite covers authorization, full order/delivery lifecycle, single-store enforcement, and concurrent delivery acceptance; all tests pass in CI. Met — 19 backend + 9 frontend tests, all green; `.github/workflows/ci.yml` runs lint, typecheck, build, and both test suites on every push/PR.
 
 **Definition of Done:**
 - Authorization tests cover role and ownership enforcement

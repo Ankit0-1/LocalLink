@@ -77,10 +77,10 @@ export function initSocketServer(httpServer: HttpServer): Server {
   return io;
 }
 
-function getIo(): Server {
-  if (!io) {
-    throw new Error('Socket.IO server has not been initialized');
-  }
+// Returns undefined rather than throwing when the socket server hasn't been started (e.g.
+// in HTTP-only tests that exercise `app.ts` directly without `initSocketServer`) — a route
+// mutating an order shouldn't 500 just because nothing is listening for the live update.
+function getIo(): Server | undefined {
   return io;
 }
 
@@ -101,7 +101,7 @@ export function emitOrderUpdated(order: OrderEventPayload): void {
     rooms.push(deliveryPartnerRoom(order.deliveryPartnerId));
   }
   getIo()
-    .to(rooms)
+    ?.to(rooms)
     .emit('order:updated', order);
 }
 
@@ -114,7 +114,7 @@ export interface DeliveryJobEventPayload {
 // first-eligible-acceptance rather than offered to a specific partner.
 export function emitJobOffered(job: DeliveryJobEventPayload): void {
   getIo()
-    .to([roleRoom(Role.DELIVERY_PARTNER), roleRoom(Role.ADMIN)])
+    ?.to([roleRoom(Role.DELIVERY_PARTNER), roleRoom(Role.ADMIN)])
     .emit('delivery:job-offered', job);
 }
 
@@ -122,6 +122,6 @@ export function emitJobOffered(job: DeliveryJobEventPayload): void {
 // their available-jobs list without waiting for a manual refresh.
 export function emitJobClaimed(job: DeliveryJobEventPayload): void {
   getIo()
-    .to([roleRoom(Role.DELIVERY_PARTNER), roleRoom(Role.ADMIN)])
+    ?.to([roleRoom(Role.DELIVERY_PARTNER), roleRoom(Role.ADMIN)])
     .emit('delivery:job-claimed', job);
 }

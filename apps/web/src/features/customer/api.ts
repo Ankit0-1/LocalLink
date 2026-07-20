@@ -1,5 +1,5 @@
 import { apiClient } from '../../lib/apiClient';
-import type { Cart, Order, OrderTracking, Product, Store, StoreDetail } from './types';
+import type { Cart, Order, OrderTracking, Store, StoreDetail } from './types';
 
 export function listStores(): Promise<{ stores: Store[] }> {
   return apiClient.get('/api/customer/stores');
