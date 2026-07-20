@@ -60,3 +60,23 @@ export interface Order {
 export interface StoreDetail extends Store {
   products: Product[];
 }
+
+export interface OrderTracking {
+  id: string;
+  status: string;
+  total: string;
+  createdAt: string;
+  updatedAt: string;
+  store: {
+    id: string;
+    name: string;
+    address: string | null;
+  };
+  deliveryPartner: {
+    id: string;
+    name: string;
+    phone: string | null;
+  } | null;
+  deliveryStatus: string | null;
+  items: OrderItem[];
+}

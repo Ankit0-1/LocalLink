@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { AdminDashboard } from '../features/admin/AdminDashboard';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/pages/RegisterPage';
 import { CustomerDashboard } from '../features/customer/CustomerDashboard';
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
           {
             element: <RequireRole allowedRoles={['DELIVERY_PARTNER']} />,
             children: [{ path: 'delivery', element: <DeliveryDashboard /> }],
+          },
+          {
+            element: <RequireRole allowedRoles={['ADMIN']} />,
+            children: [{ path: 'admin', element: <AdminDashboard /> }],
           },
         ],
       },

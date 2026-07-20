@@ -123,6 +123,44 @@ function serializeOrder(order: {
   };
 }
 
+function serializeOrderTracking(order: {
+  id: string;
+  status: string;
+  total: Prisma.Decimal | string | number;
+  createdAt: Date;
+  updatedAt: Date;
+  store: {
+    id: string;
+    name: string;
+    address: string | null;
+  };
+  deliveryPartner: { id: string; name: string; phone: string | null } | null;
+  deliveryRequest: { status: string } | null;
+  items: Array<{
+    id: string;
+    quantity: number;
+    price: Prisma.Decimal | string | number;
+    product: { id: string; name: string };
+  }>;
+}) {
+  return {
+    id: order.id,
+    status: order.status,
+    total: formatPrice(order.total) ?? '0',
+    createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
+    store: { id: order.store.id, name: order.store.name, address: order.store.address },
+    deliveryPartner: order.deliveryPartner,
+    deliveryStatus: order.deliveryRequest?.status ?? null,
+    items: order.items.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      price: formatPrice(item.price) ?? '0',
+      product: item.product,
+    })),
+  };
+}
+
 async function getCartPayload(userId: string): Promise<CartPayload> {
   const cart = await prisma.cart.findFirst({
     where: { userId },
@@ -475,12 +513,17 @@ customerRouter.get('/orders', async (req: AuthenticatedRequest, res, next) => {
   }
 });
 
+// Richer than the /orders list: includes the store address, the assigned delivery
+// partner (once one exists), and the delivery request's own status, so a customer can
+// track a single order from placement through delivery without extra requests.
 customerRouter.get('/orders/:orderId', async (req: AuthenticatedRequest, res, next) => {
   try {
     const order = await prisma.order.findFirst({
       where: { id: req.params.orderId, customerId: req.user!.id },
       include: {
-        store: { select: { id: true, name: true } },
+        store: { select: { id: true, name: true, address: true } },
+        deliveryPartner: { select: { id: true, name: true, phone: true } },
+        deliveryRequest: { select: { status: true } },
         items: {
           include: {
             product: { select: { id: true, name: true } },
@@ -493,7 +536,7 @@ customerRouter.get('/orders/:orderId', async (req: AuthenticatedRequest, res, ne
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    return res.json({ order: serializeOrder(order) });
+    return res.json({ order: serializeOrderTracking(order) });
   } catch (error) {
     return next(error);
   }

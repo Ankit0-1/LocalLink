@@ -4,8 +4,8 @@ import { routePaths } from '../../app/routePaths';
 import { ApiError } from '../../lib/apiClient';
 import { getSocket } from '../../lib/socket';
 import { useAuth } from '../auth/AuthContext';
-import { addToCart, checkoutCart, getCart, getStore, listOrders, listStores, removeCartItem, updateCartItem } from './api';
-import type { Cart, Order, Product, Store, StoreDetail } from './types';
+import { addToCart, checkoutCart, getCart, getOrder, getStore, listOrders, listStores, removeCartItem, updateCartItem } from './api';
+import type { Cart, Order, OrderTracking, Product, Store, StoreDetail } from './types';
 
 function messageFor(error: unknown, fallback: string) {
   return error instanceof ApiError ? error.message : fallback;
@@ -19,6 +19,8 @@ export function CustomerDashboard() {
   const [storeDetail, setStoreDetail] = useState<StoreDetail | null>(null);
   const [cart, setCart] = useState<Cart>({ id: null, items: [] });
   const [orders, setOrders] = useState<Order[]>([]);
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
+  const [trackingOrder, setTrackingOrder] = useState<OrderTracking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,16 @@ export function CustomerDashboard() {
   }, [selectedStoreId]);
 
   useEffect(() => {
+    if (!trackingOrderId) {
+      setTrackingOrder(null);
+      return;
+    }
+    getOrder(trackingOrderId)
+      .then(({ order }) => setTrackingOrder(order))
+      .catch((err) => setError(messageFor(err, 'Could not load order tracking.')));
+  }, [trackingOrderId]);
+
+  useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
 
@@ -68,13 +80,18 @@ export function CustomerDashboard() {
       listOrders()
         .then(({ orders: nextOrders }) => setOrders(nextOrders))
         .catch((err) => setError(messageFor(err, 'Could not refresh your orders.')));
+      if (trackingOrderId) {
+        getOrder(trackingOrderId)
+          .then(({ order }) => setTrackingOrder(order))
+          .catch((err) => setError(messageFor(err, 'Could not refresh order tracking.')));
+      }
     }
 
     socket.on('order:updated', handleOrderUpdated);
     return () => {
       socket.off('order:updated', handleOrderUpdated);
     };
-  }, []);
+  }, [trackingOrderId]);
 
   const cartTotal = useMemo(() => {
     return cart.items.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
@@ -201,9 +218,22 @@ export function CustomerDashboard() {
                   <div>{order.status}</div>
                 </div>
                 <div>₹{Number(order.total).toFixed(2)}</div>
+                <button onClick={() => setTrackingOrderId((current) => (current === order.id ? null : order.id))}>
+                  {trackingOrderId === order.id ? 'Hide tracking' : 'Track'}
+                </button>
               </li>
             ))}
           </ul>
+          {trackingOrder && <div>
+            <h3>Tracking order {trackingOrder.id.slice(0, 8)}</h3>
+            <p><strong>Status:</strong> {trackingOrder.status}</p>
+            <p>{trackingOrder.store.name} — {trackingOrder.store.address ?? 'No address listed'}</p>
+            <p>
+              {trackingOrder.deliveryPartner
+                ? `Delivery partner: ${trackingOrder.deliveryPartner.name}${trackingOrder.deliveryPartner.phone ? ` (${trackingOrder.deliveryPartner.phone})` : ''}`
+                : 'No delivery partner assigned yet.'}
+            </p>
+          </div>}
         </div>
       </div>}
     </section>

@@ -1,5 +1,5 @@
 import { apiClient } from '../../lib/apiClient';
-import type { Cart, Order, Product, Store, StoreDetail } from './types';
+import type { Cart, Order, OrderTracking, Product, Store, StoreDetail } from './types';
 
 export function listStores(): Promise<{ stores: Store[] }> {
   return apiClient.get('/api/customer/stores');
@@ -33,6 +33,6 @@ export function listOrders(): Promise<{ orders: Order[] }> {
   return apiClient.get('/api/customer/orders');
 }
 
-export function getOrder(orderId: string): Promise<{ order: Order }> {
+export function getOrder(orderId: string): Promise<{ order: OrderTracking }> {
   return apiClient.get(`/api/customer/orders/${orderId}`);
 }

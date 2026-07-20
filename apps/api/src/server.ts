@@ -4,6 +4,7 @@ import express from 'express';
 import { prisma } from './lib/prisma.js';
 import { initSocketServer } from './lib/socket.js';
 import { cors } from './middleware/cors.js';
+import adminRouter from './routes/admin.js';
 import authRouter from './routes/auth.js';
 import customerRouter from './routes/customer.js';
 import deliveryRouter from './routes/delivery.js';
@@ -18,6 +19,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/customer', customerRouter);
 app.use('/api/vendor', vendorRouter);
 app.use('/api/delivery', deliveryRouter);
+app.use('/api/admin', adminRouter);
 
 app.get('/health', async (_req, res) => {
   try {

@@ -198,14 +198,14 @@ Depends on: Phase 6
 Depends on: Phase 7
 
 **Backend Tasks**
-- [ ] Build customer order tracking endpoints
-- [ ] Build admin monitoring endpoints (users, stores, orders, live status)
+- [x] Build customer order tracking endpoints (`GET /api/customer/orders/:orderId` extended with store address, assigned delivery partner, and delivery request status — `apps/api/src/routes/customer.ts`)
+- [x] Build admin monitoring endpoints (users, stores, orders, live status) (`apps/api/src/routes/admin.ts` — new router, `GET /users`, `GET /stores`, `GET /orders`; live status comes for free from the Phase 7 `role:ADMIN` socket room, which every order/delivery event already broadcasts to)
 
 **Frontend Tasks**
-- [ ] Build customer order tracking views
-- [ ] Build admin monitoring views
+- [x] Build customer order tracking views (`CustomerDashboard.tsx` — "Track"/"Hide tracking" toggle per order in history, renders status/store address/assigned delivery partner, refreshes live on `order:updated`)
+- [x] Build admin monitoring views (`features/admin/AdminDashboard.tsx` — new, read-only Users/Stores/Orders panels, orders refresh live on `order:updated`/`delivery:job-offered`/`delivery:job-claimed`)
 
-**Milestone checkpoint:** A customer can track an order from placement to completion, and an admin can view live status across users, stores, and orders.
+**Milestone checkpoint:** A customer can track an order from placement to completion, and an admin can view live status across users, stores, and orders. Met — verified end-to-end against a real backend (see `docs/current.md`).
 
 **Definition of Done:**
 - Customer can view real-time status of their own order from placement to completion
