@@ -39,11 +39,11 @@ Depends on: Phase 0
 - [x] Store and attach JWT access token to authenticated requests
   - [x] `apiClient` (get/post/put/patch/delete, base URL, auth header injection, JSON parsing, `ApiError`) and `tokenStorage` (getToken/setToken/clearToken/hasToken) built and now exercised by `LoginPage`/`RegisterPage` via `AuthContext`
   - [x] `AuthContext`/`AuthProvider` built (typed models, `login`/`register`/`fetchMe` API calls, `useReducer` state, session rehydration via `GET /api/auth/me`), mounted app-wide in `App.tsx`, and called by `LoginPage`/`RegisterPage`
-- [ ] Gate routes/UI by role (customer, vendor, delivery partner, admin)
+- [x] Gate routes/UI by role (customer, vendor, delivery partner, admin)
   - [x] Routing foundation in place (React Router, root layout, route path constants, `getDefaultRoute(role)` helper, `/login` and `/register` routes)
-  - [x] `RequireAuth` route guard built (`routes/RequireAuth.tsx` + `routes/RouteLoadingFallback.tsx`) — handles loading/authenticated/unauthenticated states; not yet wired into the router since there are no protected routes to guard yet. `RequireRole` still not built.
+  - [x] `RequireAuth` (`routes/RequireAuth.tsx` + `routes/RouteLoadingFallback.tsx`) and `RequireRole` (`routes/RequireRole.tsx`) guards built and wired into `router.tsx`, gating `/customer` (CUSTOMER) and `/vendor` (VENDOR)
 
-**Milestone checkpoint:** A user can register, log in, and reach role-appropriate views; unauthenticated or wrong-role requests are rejected by the API. (Backend half met — auth endpoints and middleware verified with a consistent `{ user, accessToken }` / `{ user }` response contract; frontend half still pending.)
+**Milestone checkpoint:** A user can register, log in, and reach role-appropriate views; unauthenticated or wrong-role requests are rejected by the API. Met — `/customer` and `/vendor` are gated by `RequireAuth`/`RequireRole` and reachable only by the matching role.
 
 **Definition of Done:**
 - Register works
@@ -85,14 +85,14 @@ Depends on: Phase 1
 Depends on: Phase 2
 
 **Backend Tasks**
-- [ ] Build store listing and store-detail product endpoints
-- [ ] Build single-store cart endpoints; reject mixed-store cart additions
+- [x] Build store listing and store-detail product endpoints (`GET /api/customer/stores`, `GET /api/customer/stores/:storeId`, `GET /api/customer/stores/:storeId/products` — `apps/api/src/routes/customer.ts`)
+- [x] Build single-store cart endpoints; reject mixed-store cart additions (`GET/POST /api/customer/cart(/items)`, `PATCH`/`DELETE /api/customer/cart/items/:itemId` — adding a product from a different store than what's already in the cart returns 409)
 
 **Frontend Tasks**
-- [ ] Build customer store browsing and store-detail product views
-- [ ] Build single-store cart UI; prevent mixed-store checkout in the UI
+- [x] Build customer store browsing and store-detail product views (`CustomerDashboard.tsx` — store list + selected store's product catalog)
+- [x] Build single-store cart UI; prevent mixed-store checkout in the UI (cart panel with quantity edit/remove; mixed-store additions are rejected server-side and surfaced via `ApiError`)
 
-**Milestone checkpoint:** A customer can browse stores, view a store's products, and build a cart limited to a single store.
+**Milestone checkpoint:** A customer can browse stores, view a store's products, and build a cart limited to a single store. Met.
 
 **Definition of Done:**
 - Customer can view a list of stores
@@ -108,12 +108,12 @@ Depends on: Phase 2
 Depends on: Phase 3
 
 **Backend Tasks**
-- [ ] Create orders linked to the chosen store and validate product ownership
+- [x] Create orders linked to the chosen store and validate product ownership (`POST /api/customer/orders` — rejects empty/mixed-store carts, verifies every item's product/store is still active, computes the total server-side, and clears the cart in the same transaction as order creation)
 
 **Frontend Tasks**
-- [ ] Build checkout flow that submits the cart as an order
+- [x] Build checkout flow that submits the cart as an order (`CustomerDashboard.tsx`'s checkout form + order history list)
 
-**Milestone checkpoint:** A customer can check out a single-store cart and a corresponding order is created and visible to the owning vendor.
+**Milestone checkpoint:** A customer can check out a single-store cart and a corresponding order is created and visible to the owning vendor. Met — `GET /api/vendor/orders` (added in Phase 5) is what makes the order visible to the vendor; before that endpoint existed, checkout worked but the order had no vendor-facing read path.
 
 **Definition of Done:**
 - Checkout creates an order linked to the correct store
@@ -129,15 +129,15 @@ Depends on: Phase 3
 Depends on: Phase 4
 
 **Backend Tasks**
-- [ ] Build vendor order dashboard endpoints scoped to owned stores
-- [ ] Implement vendor accept, reject, preparation, and ready-for-pickup actions
-- [ ] Create the order's delivery request only after ready-for-pickup, atomically
+- [x] Build vendor order dashboard endpoints scoped to owned stores (`GET /api/vendor/orders` — `apps/api/src/routes/vendor.ts`, scoped via `store: { vendorId }`)
+- [x] Implement vendor accept, reject, preparation, and ready-for-pickup actions (`PATCH /api/vendor/orders/:orderId/{accept,reject,preparing,ready-for-pickup}`, each enforcing the required prior status: `PENDING`→`ACCEPTED`/`REJECTED`, `ACCEPTED`→`PREPARING`, `PREPARING`→`READY_FOR_PICKUP`)
+- [x] Create the order's delivery request only after ready-for-pickup, atomically (`prisma.$transaction` updates the order status and creates the `DeliveryRequest` together; the unique `orderId` constraint plus a caught `P2002` returning 409 prevents a duplicate delivery request under a race)
 
 **Frontend Tasks**
-- [ ] Build vendor order dashboard UI scoped to owned stores
-- [ ] Build vendor controls for accept, reject, preparation, and ready-for-pickup actions
+- [x] Build vendor order dashboard UI scoped to owned stores (`VendorDashboard.tsx` "Orders" section, backed by `features/vendor/api.ts`'s `listOrders`)
+- [x] Build vendor controls for accept, reject, preparation, and ready-for-pickup actions (status-conditional action buttons in the same section)
 
-**Milestone checkpoint:** A vendor can move an order through accepted → preparing → ready-for-pickup, and exactly one delivery request is created at that point.
+**Milestone checkpoint:** A vendor can move an order through accepted → preparing → ready-for-pickup, and exactly one delivery request is created at that point. Met — verified end-to-end against a real backend (see `docs/current.md`).
 
 **Definition of Done:**
 - Vendor can view orders scoped to their own stores only
