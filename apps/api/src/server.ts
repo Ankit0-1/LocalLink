@@ -1,6 +1,8 @@
 import 'dotenv/config';
+import { createServer } from 'http';
 import express from 'express';
 import { prisma } from './lib/prisma.js';
+import { initSocketServer } from './lib/socket.js';
 import { cors } from './middleware/cors.js';
 import authRouter from './routes/auth.js';
 import customerRouter from './routes/customer.js';
@@ -33,6 +35,9 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   res.status(500).json({ message: 'An unexpected server error occurred' });
 });
 
-app.listen(port, () => {
+const httpServer = createServer(app);
+initSocketServer(httpServer);
+
+httpServer.listen(port, () => {
   console.log(`LocalLink API listening on port ${port}`);
 });

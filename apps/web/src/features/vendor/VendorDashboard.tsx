@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routePaths } from '../../app/routePaths';
 import { ApiError } from '../../lib/apiClient';
+import { getSocket } from '../../lib/socket';
 import { useAuth } from '../auth/AuthContext';
 import {
   acceptOrder,
@@ -67,6 +68,20 @@ export function VendorDashboard() {
       .then(({ products: nextProducts }) => setProducts(nextProducts))
       .catch((err) => setError(messageFor(err, 'Could not load products.')));
   }, [selectedStoreId]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    function handleOrderUpdated() {
+      loadOrders().catch((err) => setError(messageFor(err, 'Could not refresh your orders.')));
+    }
+
+    socket.on('order:updated', handleOrderUpdated);
+    return () => {
+      socket.off('order:updated', handleOrderUpdated);
+    };
+  }, []);
 
   async function submitStore(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

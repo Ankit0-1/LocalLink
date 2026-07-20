@@ -1,6 +1,7 @@
 import { OrderStatus, Prisma, Role } from '@prisma/client';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { emitJobOffered, emitOrderUpdated } from '../lib/socket.js';
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../middleware/auth.js';
 
 const vendorRouter = Router();
@@ -246,6 +247,16 @@ function findOwnedOrder(vendorId: string, orderId: string) {
   });
 }
 
+function toOrderEvent(order: VendorOrder, vendorId: string) {
+  return {
+    id: order.id,
+    status: order.status,
+    customerId: order.customer.id,
+    vendorId,
+    deliveryPartnerId: null,
+  };
+}
+
 vendorRouter.get('/orders', async (req: AuthenticatedRequest, res, next) => {
   try {
     const orders = await prisma.order.findMany({
@@ -272,6 +283,7 @@ vendorRouter.patch('/orders/:orderId/accept', async (req: AuthenticatedRequest, 
       data: { status: OrderStatus.ACCEPTED },
       select: vendorOrderSelect,
     });
+    emitOrderUpdated(toOrderEvent(updatedOrder, req.user!.id));
     return res.json({ order: serializeOrder(updatedOrder) });
   } catch (error) {
     return next(error);
@@ -291,6 +303,7 @@ vendorRouter.patch('/orders/:orderId/reject', async (req: AuthenticatedRequest, 
       data: { status: OrderStatus.REJECTED },
       select: vendorOrderSelect,
     });
+    emitOrderUpdated(toOrderEvent(updatedOrder, req.user!.id));
     return res.json({ order: serializeOrder(updatedOrder) });
   } catch (error) {
     return next(error);
@@ -310,6 +323,7 @@ vendorRouter.patch('/orders/:orderId/preparing', async (req: AuthenticatedReques
       data: { status: OrderStatus.PREPARING },
       select: vendorOrderSelect,
     });
+    emitOrderUpdated(toOrderEvent(updatedOrder, req.user!.id));
     return res.json({ order: serializeOrder(updatedOrder) });
   } catch (error) {
     return next(error);
@@ -325,22 +339,29 @@ vendorRouter.patch('/orders/:orderId/ready-for-pickup', async (req: Authenticate
     }
 
     let updatedOrder: VendorOrder;
+    let deliveryRequestId: string;
     try {
-      updatedOrder = await prisma.$transaction(async (tx) => {
+      ({ order: updatedOrder, deliveryRequestId } = await prisma.$transaction(async (tx) => {
         const result = await tx.order.update({
           where: { id: order.id },
           data: { status: OrderStatus.READY_FOR_PICKUP },
           select: vendorOrderSelect,
         });
-        await tx.deliveryRequest.create({ data: { orderId: order.id } });
-        return result;
-      });
+        const deliveryRequest = await tx.deliveryRequest.create({
+          data: { orderId: order.id },
+          select: { id: true },
+        });
+        return { order: result, deliveryRequestId: deliveryRequest.id };
+      }));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         return res.status(409).json({ message: 'A delivery request already exists for this order' });
       }
       throw error;
     }
+
+    emitOrderUpdated(toOrderEvent(updatedOrder, req.user!.id));
+    emitJobOffered({ id: deliveryRequestId, orderId: updatedOrder.id });
 
     return res.json({ order: serializeOrder(updatedOrder) });
   } catch (error) {

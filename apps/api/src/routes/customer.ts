@@ -1,6 +1,7 @@
 import { Prisma, Role } from '@prisma/client';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { emitOrderUpdated } from '../lib/socket.js';
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../middleware/auth.js';
 
 const customerRouter = Router();
@@ -97,6 +98,7 @@ function serializeOrder(order: {
   store: {
     id: string;
     name: string;
+    vendorId?: string;
   };
   items: Array<{
     id: string;
@@ -111,7 +113,7 @@ function serializeOrder(order: {
     total: formatPrice(order.total) ?? '0',
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
-    store: order.store,
+    store: { id: order.store.id, name: order.store.name },
     items: order.items.map((item) => ({
       id: item.id,
       quantity: item.quantity,
@@ -425,7 +427,7 @@ customerRouter.post('/orders', async (req: AuthenticatedRequest, res, next) => {
           },
         },
         include: {
-          store: { select: { id: true, name: true } },
+          store: { select: { id: true, name: true, vendorId: true } },
           items: {
             include: {
               product: { select: { id: true, name: true } },
@@ -436,6 +438,14 @@ customerRouter.post('/orders', async (req: AuthenticatedRequest, res, next) => {
 
       await tx.cartItem.deleteMany({ where: { cartId: cartPayload.id! } });
       return createdOrder;
+    });
+
+    emitOrderUpdated({
+      id: order.id,
+      status: order.status,
+      customerId: order.customerId,
+      vendorId: order.store.vendorId,
+      deliveryPartnerId: null,
     });
 
     return res.status(201).json({ order: serializeOrder(order) });

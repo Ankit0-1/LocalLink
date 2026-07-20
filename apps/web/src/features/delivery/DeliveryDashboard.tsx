@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routePaths } from '../../app/routePaths';
 import { ApiError } from '../../lib/apiClient';
+import { getSocket } from '../../lib/socket';
 import { useAuth } from '../auth/AuthContext';
 import { acceptJob, listJobs, listMyOrders, markDelivered, markPickedUp } from './api';
 import type { Job, Order } from './types';
@@ -33,6 +34,27 @@ export function DeliveryDashboard() {
     Promise.all([loadJobs(), loadOrders()])
       .catch((err) => setError(messageFor(err, 'Could not load the delivery dashboard.')))
       .finally(() => setIsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    function handleOrderUpdated() {
+      loadOrders().catch((err) => setError(messageFor(err, 'Could not refresh your deliveries.')));
+    }
+    function handleJobsChanged() {
+      loadJobs().catch((err) => setError(messageFor(err, 'Could not refresh available jobs.')));
+    }
+
+    socket.on('order:updated', handleOrderUpdated);
+    socket.on('delivery:job-offered', handleJobsChanged);
+    socket.on('delivery:job-claimed', handleJobsChanged);
+    return () => {
+      socket.off('order:updated', handleOrderUpdated);
+      socket.off('delivery:job-offered', handleJobsChanged);
+      socket.off('delivery:job-claimed', handleJobsChanged);
+    };
   }, []);
 
   async function handleAccept(job: Job) {

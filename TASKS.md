@@ -177,12 +177,12 @@ Depends on: Phase 5
 Depends on: Phase 6
 
 **Backend Tasks**
-- [ ] Add Socket.IO events scoped to customers, store vendors, delivery partners, and admins
+- [x] Add Socket.IO events scoped to customers, store vendors, delivery partners, and admins (`apps/api/src/lib/socket.ts`, mounted on the same HTTP server in `server.ts`; JWT-authenticated handshake, room membership assigned server-side from the verified token — never client-supplied)
 
 **Frontend Tasks**
-- [ ] Subscribe to and render realtime order/delivery status updates per role
+- [x] Subscribe to and render realtime order/delivery status updates per role (`apps/web/src/lib/socket.ts` + per-dashboard `useEffect` subscriptions in `CustomerDashboard`, `VendorDashboard`, `DeliveryDashboard`)
 
-**Milestone checkpoint:** Order and delivery status changes propagate live to the relevant customer, vendor, delivery partner, and admin clients without a page reload.
+**Milestone checkpoint:** Order and delivery status changes propagate live to the relevant customer, vendor, delivery partner, and admin clients without a page reload. Met — verified with real `socket.io-client` connections per role against a real backend (see `docs/current.md`).
 
 **Definition of Done:**
 - Customers receive live updates for their own orders only

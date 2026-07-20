@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routePaths } from '../../app/routePaths';
 import { ApiError } from '../../lib/apiClient';
+import { getSocket } from '../../lib/socket';
 import { useAuth } from '../auth/AuthContext';
 import { addToCart, checkoutCart, getCart, getStore, listOrders, listStores, removeCartItem, updateCartItem } from './api';
 import type { Cart, Order, Product, Store, StoreDetail } from './types';
@@ -58,6 +59,22 @@ export function CustomerDashboard() {
       .then(({ store }) => setStoreDetail(store))
       .catch((err) => setError(messageFor(err, 'Could not load store details.')));
   }, [selectedStoreId]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    function handleOrderUpdated() {
+      listOrders()
+        .then(({ orders: nextOrders }) => setOrders(nextOrders))
+        .catch((err) => setError(messageFor(err, 'Could not refresh your orders.')));
+    }
+
+    socket.on('order:updated', handleOrderUpdated);
+    return () => {
+      socket.off('order:updated', handleOrderUpdated);
+    };
+  }, []);
 
   const cartTotal = useMemo(() => {
     return cart.items.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);

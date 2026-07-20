@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, type ReactNode } from 'react';
 import { fetchMe, login as loginRequest, register as registerRequest } from './api';
-import { clearToken, hasToken, setToken } from '../../lib/tokenStorage';
+import { clearToken, getToken, hasToken, setToken } from '../../lib/tokenStorage';
+import { connectSocket, disconnectSocket } from '../../lib/socket';
 import type { LoginPayload, RegisterPayload, User } from './types';
 
 interface AuthState {
@@ -47,7 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     fetchMe()
-      .then(({ user }) => dispatch({ type: 'AUTH_SUCCESS', user }))
+      .then(({ user }) => {
+        const token = getToken();
+        if (token) connectSocket(token);
+        dispatch({ type: 'AUTH_SUCCESS', user });
+      })
       .catch(() => {
         clearToken();
         dispatch({ type: 'AUTH_CLEAR' });
@@ -57,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function login(payload: LoginPayload): Promise<User> {
     const { user, accessToken } = await loginRequest(payload);
     setToken(accessToken);
+    connectSocket(accessToken);
     dispatch({ type: 'AUTH_SUCCESS', user });
     return user;
   }
@@ -64,12 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function register(payload: RegisterPayload): Promise<User> {
     const { user, accessToken } = await registerRequest(payload);
     setToken(accessToken);
+    connectSocket(accessToken);
     dispatch({ type: 'AUTH_SUCCESS', user });
     return user;
   }
 
   function logout(): void {
     clearToken();
+    disconnectSocket();
     dispatch({ type: 'AUTH_CLEAR' });
   }
 

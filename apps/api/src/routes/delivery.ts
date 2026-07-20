@@ -1,6 +1,7 @@
 import { DeliveryRequestStatus, OrderStatus, Prisma, Role } from '@prisma/client';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { emitJobClaimed, emitOrderUpdated } from '../lib/socket.js';
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../middleware/auth.js';
 
 const deliveryRouter = Router();
@@ -13,7 +14,7 @@ const jobOrderSelect = {
   total: true,
   createdAt: true,
   updatedAt: true,
-  store: { select: { id: true, name: true, address: true } },
+  store: { select: { id: true, name: true, address: true, vendorId: true } },
   customer: { select: { id: true, name: true, phone: true } },
 } as const;
 
@@ -26,8 +27,18 @@ function serializeOrder(order: JobOrder) {
     total: order.total.toString(),
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
-    store: order.store,
+    store: { id: order.store.id, name: order.store.name, address: order.store.address },
     customer: order.customer,
+  };
+}
+
+function toOrderEvent(order: JobOrder, deliveryPartnerId: string | null) {
+  return {
+    id: order.id,
+    status: order.status,
+    customerId: order.customer.id,
+    vendorId: order.store.vendorId,
+    deliveryPartnerId,
   };
 }
 
@@ -95,6 +106,10 @@ deliveryRouter.patch('/jobs/:deliveryRequestId/accept', async (req: Authenticate
     if (!order) {
       return res.status(409).json({ message: 'This job has already been accepted by another delivery partner' });
     }
+
+    emitOrderUpdated(toOrderEvent(order, partnerId));
+    emitJobClaimed({ id: deliveryRequest.id, orderId: order.id });
+
     return res.json({ order: serializeOrder(order) });
   } catch (error) {
     return next(error);
@@ -128,6 +143,7 @@ deliveryRouter.patch('/orders/:orderId/picked-up', async (req: AuthenticatedRequ
       data: { status: OrderStatus.PICKED_UP },
       select: jobOrderSelect,
     });
+    emitOrderUpdated(toOrderEvent(updatedOrder, req.user!.id));
     return res.json({ order: serializeOrder(updatedOrder) });
   } catch (error) {
     return next(error);
@@ -147,6 +163,7 @@ deliveryRouter.patch('/orders/:orderId/delivered', async (req: AuthenticatedRequ
       data: { status: OrderStatus.DELIVERED },
       select: jobOrderSelect,
     });
+    emitOrderUpdated(toOrderEvent(updatedOrder, req.user!.id));
     return res.json({ order: serializeOrder(updatedOrder) });
   } catch (error) {
     return next(error);
