@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Alert, Button, Input, Label } from '../../components/ui';
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => void;
@@ -16,33 +17,35 @@ export function LoginForm({ onSubmit, isSubmitting, error }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label htmlFor="email">Email</label>
-        <input
+        <Label htmlFor="email">Email</Label>
+        <Input
           id="email"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
+          placeholder="you@example.com"
           required
         />
       </div>
       <div>
-        <label htmlFor="password">Password</label>
-        <input
+        <Label htmlFor="password">Password</Label>
+        <Input
           id="password"
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="current-password"
+          placeholder="••••••••"
           required
         />
       </div>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={isSubmitting}>
+      {error && <Alert variant="error">{error}</Alert>}
+      <Button type="submit" isLoading={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? 'Logging in…' : 'Log in'}
-      </button>
+      </Button>
     </form>
   );
 }

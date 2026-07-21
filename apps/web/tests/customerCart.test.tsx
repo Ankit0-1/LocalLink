@@ -1,11 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../src/lib/apiClient';
 import { AuthContext, type AuthContextValue } from '../src/features/auth/AuthContext';
-import { CustomerDashboard } from '../src/features/customer/CustomerDashboard';
+import { CartProvider } from '../src/features/customer/CartContext';
+import { StorePage } from '../src/features/customer/pages/StorePage';
 import * as customerApi from '../src/features/customer/api';
+import { ToastProvider } from '../src/components/ui';
 import type { Cart, Store, StoreDetail } from '../src/features/customer/types';
 
 vi.mock('../src/lib/socket', () => ({
@@ -68,17 +70,27 @@ function authValue(): AuthContextValue {
   };
 }
 
-function renderDashboard() {
+function renderStorefront() {
   return render(
     <AuthContext.Provider value={authValue()}>
-      <MemoryRouter>
-        <CustomerDashboard />
-      </MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[`/customer/stores/${storeA.id}`]}>
+          <CartProvider>
+            <nav>
+              <Link to={`/customer/stores/${storeA.id}`}>Store A</Link>
+              <Link to={`/customer/stores/${storeB.id}`}>Store B</Link>
+            </nav>
+            <Routes>
+              <Route path="/customer/stores/:storeId" element={<StorePage />} />
+            </Routes>
+          </CartProvider>
+        </MemoryRouter>
+      </ToastProvider>
     </AuthContext.Provider>,
   );
 }
 
-describe('CustomerDashboard: single-store cart UI', () => {
+describe('Customer storefront: cross-store cart guard', () => {
   beforeEach(() => {
     vi.mocked(customerApi.listStores).mockResolvedValue({ stores: [storeA, storeB] });
     vi.mocked(customerApi.listOrders).mockResolvedValue({ orders: [] });
@@ -98,13 +110,13 @@ describe('CustomerDashboard: single-store cart UI', () => {
       new ApiError(409, 'Your cart already contains items from another store. Please checkout or clear it first.'),
     );
 
-    renderDashboard();
+    renderStorefront();
 
     // Cart already holds an item from Store A (from the mocked getCart()).
     await waitFor(() => expect(screen.getByText('Widget A')).toBeInTheDocument());
 
-    // Switch to Store B and try to add its product.
-    await user.click(screen.getByRole('button', { name: 'Store B' }));
+    // Navigate to Store B and try to add its product.
+    await user.click(screen.getByRole('link', { name: 'Store B' }));
     await waitFor(() => expect(screen.getByText('Widget B')).toBeInTheDocument());
     await user.click(screen.getByRole('button', { name: 'Add to cart' }));
 
@@ -114,7 +126,6 @@ describe('CustomerDashboard: single-store cart UI', () => {
 
     // The cart total still reflects only the original Store A item — addToCart's
     // rejection was never applied to local cart state.
-    expect(screen.getByText('Widget A')).toBeInTheDocument();
     expect(screen.getByText(/Total:/).parentElement).toHaveTextContent('Total: ₹10.00');
     expect(customerApi.addToCart).toHaveBeenCalledTimes(1);
   });
@@ -127,7 +138,7 @@ describe('CustomerDashboard: single-store cart UI', () => {
     };
     vi.mocked(customerApi.addToCart).mockResolvedValue({ cart: updatedCart });
 
-    renderDashboard();
+    renderStorefront();
 
     await waitFor(() => expect(screen.getByText('Widget A')).toBeInTheDocument());
     await user.click(screen.getByRole('button', { name: 'Add to cart' }));

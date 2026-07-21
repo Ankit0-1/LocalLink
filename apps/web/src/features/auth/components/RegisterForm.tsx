@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Alert, Button, Input, Label, Select } from '../../../components/ui';
 import type { Role } from '../types';
 
 const registrationRoles: { value: Role; label: string }[] = [
@@ -34,65 +35,69 @@ export function RegisterForm({ onSubmit, isSubmitting, error }: RegisterFormProp
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label htmlFor="name">Name</label>
-        <input
+        <Label htmlFor="name">Name</Label>
+        <Input
           id="name"
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
           autoComplete="name"
+          placeholder="Jane Doe"
           required
         />
       </div>
       <div>
-        <label htmlFor="email">Email</label>
-        <input
+        <Label htmlFor="email">Email</Label>
+        <Input
           id="email"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
+          placeholder="you@example.com"
           required
         />
       </div>
       <div>
-        <label htmlFor="password">Password</label>
-        <input
+        <Label htmlFor="password">Password</Label>
+        <Input
           id="password"
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="new-password"
+          placeholder="At least 8 characters"
           minLength={8}
           required
         />
       </div>
       <div>
-        <label htmlFor="phone">Phone (optional)</label>
-        <input
+        <Label htmlFor="phone">Phone (optional)</Label>
+        <Input
           id="phone"
           type="tel"
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
           autoComplete="tel"
+          placeholder="+91 98765 43210"
         />
       </div>
       <div>
-        <label htmlFor="role">I am a</label>
-        <select id="role" value={role} onChange={(event) => setRole(event.target.value as Role)}>
+        <Label htmlFor="role">I am a</Label>
+        <Select id="role" value={role} onChange={(event) => setRole(event.target.value as Role)}>
           {registrationRoles.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={isSubmitting}>
+      {error && <Alert variant="error">{error}</Alert>}
+      <Button type="submit" isLoading={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? 'Creating account…' : 'Create account'}
-      </button>
+      </Button>
     </form>
   );
 }
